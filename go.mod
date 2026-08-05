@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.26.0
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.28.0
 	nhooyr.io/websocket v1.8.10
 )
 
