@@ -61,7 +61,7 @@ var ReceivingSpinner = spinner.Spinner{
 func LogSeparator(width int) string {
 	paddedWidth := math.Max(0, float64(width)-2*MARGIN)
 	return fmt.Sprintf("%s\n\n",
-		BaseStyle.Copy().
+		BaseStyle.
 			Foreground(lipgloss.Color(SECONDARY_COLOR)).
 			Render(strings.Repeat("─", int(math.Min(MAX_WIDTH, paddedWidth)))))
 }

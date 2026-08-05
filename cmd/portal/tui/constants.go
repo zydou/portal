@@ -107,13 +107,13 @@ var Keys = KeyMap{
 var PadText = strings.Repeat(" ", MARGIN)
 var BaseStyle = lipgloss.NewStyle()
 
-var InfoStyle = BaseStyle.Copy().Foreground(lipgloss.Color(PRIMARY_COLOR)).Render
-var HelpStyle = BaseStyle.Copy().Foreground(lipgloss.Color(SECONDARY_COLOR)).Render
-var ItalicText = BaseStyle.Copy().Italic(true).Render
-var BoldText = BaseStyle.Copy().Bold(true).Render
-var ErrorText = BaseStyle.Copy().Foreground(lipgloss.Color(ERROR_COLOR)).Render
-var WarningText = BaseStyle.Copy().Foreground(lipgloss.Color(WARNING_COLOR)).Render
-var SuccessText = BaseStyle.Copy().Foreground(lipgloss.Color(CHECK_COLOR)).Render
+var InfoStyle = BaseStyle.Foreground(lipgloss.Color(PRIMARY_COLOR)).Render
+var HelpStyle = BaseStyle.Foreground(lipgloss.Color(SECONDARY_COLOR)).Render
+var ItalicText = BaseStyle.Italic(true).Render
+var BoldText = BaseStyle.Bold(true).Render
+var ErrorText = BaseStyle.Foreground(lipgloss.Color(ERROR_COLOR)).Render
+var WarningText = BaseStyle.Foreground(lipgloss.Color(WARNING_COLOR)).Render
+var SuccessText = BaseStyle.Foreground(lipgloss.Color(CHECK_COLOR)).Render
 
 var CopyKeyHelpText = BaseStyle.Render("password → clipboard")
 var CopyKeyActiveHelpText = SuccessText("✓") + HelpStyle(" password → clipboard")

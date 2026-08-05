@@ -17,7 +17,7 @@ const (
 	sizeColumnWidthFactor float64 = 1 - nameColumnWidthFactor
 )
 
-var fileTableStyle = tui.BaseStyle.Copy().
+var fileTableStyle = tui.BaseStyle.
 	BorderStyle(lipgloss.RoundedBorder()).
 	BorderForeground(lipgloss.Color(tui.SECONDARY_COLOR)).
 	MarginLeft(tui.MARGIN)
