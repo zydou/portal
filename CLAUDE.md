@@ -40,10 +40,10 @@ make image   # docker build --tag rendezvous:latest
 make serve   # image + docker run -dp 8080:8080
 ```
 
-CI (`.github/workflows/ci.yml`) runs `lint`, `build`, `build-wasm`, and `test` (full Docker-based
-e2e suite, `make test-e2e`) on every push — this is a personal fork with no PR workflow, so there's
-no separate PR-only e2e gate. Go version pinned to 1.26.x. `.github/workflows/release.yml` builds
-and publishes GitHub releases (Linux/macOS, amd64/arm64 only) via `.goreleaser.yml` on `v*.*.*` tags.
+CI (`.github/workflows/ci.yml`) runs `lint`, `build`, `build-wasm`, and `test` (unit tests only,
+`make test`, no Docker) on every push. Go version pinned to 1.26.x. `.github/workflows/release.yml`
+builds and publishes GitHub releases (Linux/macOS, amd64/arm64 only) via `.goreleaser.yml` on
+`v*.*.*` tags.
 
 ## Architecture
 

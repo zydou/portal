@@ -55,10 +55,8 @@ jobs:
         with:
           go-version: 1.26.5
 
-      - name: E2E Test
-        env:
-          PORTAL_VERSION: "v1.1.1" # version does not matter for outcome of test, just for building the image
-        run: make test-e2e
+      - name: Test
+        run: make test
 
   build-wasm:
     runs-on: ubuntu-latest
