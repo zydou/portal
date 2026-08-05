@@ -10,15 +10,15 @@ import (
 
 // Send executes the portal send sequence. The initial connection with the relay
 // server is performed synchronously, after that the transfer sequence is performed
-// asynchronously. The function returns a portal password, a error from the rendezvous
-// initial rendezvous connection, and a channel on which errors from the transfer sequence
-// can be listened to. The provided config will be merged with the default config.
-func Send(ctx context.Context, payload io.Reader, payloadSize int64, config *Config) (string, error, chan error) {
+// asynchronously. The function returns a portal password, a channel on which errors
+// from the transfer sequence can be listened to, and an error from the initial
+// rendezvous connection. The provided config will be merged with the default config.
+func Send(ctx context.Context, payload io.Reader, payloadSize int64, config *Config) (string, chan error, error) {
 	merged := MergeConfig(defaultConfig, config)
 	errC := make(chan error, 1) // buffer channel as to not block send.
 	rc, password, err := sender.ConnectRendezvous(ctx, merged.RendezvousAddr)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 	go func() {
 		defer close(errC)
@@ -32,7 +32,7 @@ func Send(ctx context.Context, payload io.Reader, payloadSize int64, config *Con
 			return
 		}
 	}()
-	return password, nil, errC
+	return password, errC, nil
 }
 
 // Receive executes the portal receive sequence. The payload is written

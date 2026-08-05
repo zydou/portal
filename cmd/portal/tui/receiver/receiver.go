@@ -132,7 +132,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.version.Compare(msg.ServerVersion) {
 		case semver.CompareNewMajor,
 			semver.CompareOldMajor:
-			//lint:ignore ST1005 error string displayed in tui
+			//nolint:staticcheck // error string displayed in tui
 			return m, tui.ErrorCmd(fmt.Errorf("Portal version (%s) incompatible with server version (%s)", m.version, msg.ServerVersion))
 		case semver.CompareNewMinor,
 			semver.CompareNewPatch:
@@ -207,7 +207,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(m.spinner.Tick, m.newOverwritePrompt(msg.commiter.FileName()))
 
 	case unpackDoneMsg:
-		m.unpacker.Close()
+		_ = m.unpacker.Close()
 		m.state = showFinished
 		m.fileTable.SetFiles(m.receivedFiles)
 		return m, tui.QuitCmd()

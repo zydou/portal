@@ -44,8 +44,12 @@ func PackFiles(files []*os.File) (*os.File, int64, error) {
 			return nil, 0, err
 		}
 	}
-	tw.Close()
-	tempFileWriter.Flush()
+	if err := tw.Close(); err != nil {
+		return nil, 0, err
+	}
+	if err := tempFileWriter.Flush(); err != nil {
+		return nil, 0, err
+	}
 	fileInfo, err := tempFile.Stat()
 	if err != nil {
 		return nil, 0, err
@@ -160,7 +164,7 @@ func (c *committer) Commit() (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		if _, err := io.Copy(f, c.tr); err != nil {
 			return 0, err
 		}
@@ -168,7 +172,7 @@ func (c *committer) Commit() (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		return info.Size(), nil
+		return info.Size(), f.Close()
 	default:
 		return 0, errors.New("unsupported file type")
 	}
@@ -205,7 +209,7 @@ func RemoveTemporaryFiles(prefix string) {
 		}
 		fileName := fileInfo.Name()
 		if strings.HasPrefix(fileName, prefix) {
-			os.Remove(filepath.Join(os.TempDir(), fileName))
+			_ = os.Remove(filepath.Join(os.TempDir(), fileName))
 		}
 	}
 }
@@ -261,7 +265,7 @@ func addToTarArchive(tw *tar.Writer, file *os.File) error {
 			if err != nil {
 				return err
 			}
-			defer data.Close()
+			defer func() { _ = data.Close() }()
 			if _, err := io.Copy(tw, data); err != nil {
 				return err
 			}

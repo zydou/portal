@@ -47,7 +47,7 @@ func Config() *cobra.Command {
 			// Strip arguments from editor variable -- allows exec.Command to lookup the editor executable correctly.
 			editor, _, _ := strings.Cut(os.Getenv("EDITOR"), " ")
 			if len(editor) == 0 {
-				//lint:ignore ST1005 error string is command output
+				//nolint:staticcheck // error string is command output shown directly to the user
 				return fmt.Errorf(
 					"Could not find default editor (is the $EDITOR variable set?)\nOptionally you can open the file (%s) manually", configPath,
 				)

@@ -52,7 +52,7 @@ func (config Config) Map() map[string]any {
 func (config Config) Yaml() []byte {
 	var builder strings.Builder
 	for k, v := range config.Map() {
-		builder.WriteString(fmt.Sprintf("%s: %v", k, v))
+		fmt.Fprintf(&builder, "%s: %v", k, v)
 		builder.WriteRune('\n')
 	}
 	return []byte(builder.String())
@@ -82,21 +82,21 @@ func Init() error {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			err := os.MkdirAll(configPath, os.ModePerm)
 			if err != nil {
-				return fmt.Errorf("Could not create config directory: %w", err)
+				return fmt.Errorf("could not create config directory: %w", err)
 			}
 
 			configFile, err := os.Create(filepath.Join(configPath, fmt.Sprintf("%s.%s", CONFIG_FILE_NAME, CONFIG_FILE_EXT)))
 			if err != nil {
-				return fmt.Errorf("Could not create config file: %w", err)
+				return fmt.Errorf("could not create config file: %w", err)
 			}
-			defer configFile.Close()
+			defer func() { _ = configFile.Close() }()
 
 			_, err = configFile.Write(GetDefault().Yaml())
 			if err != nil {
-				return fmt.Errorf("Could not write defaults to config file: %w", err)
+				return fmt.Errorf("could not write defaults to config file: %w", err)
 			}
 		} else {
-			return fmt.Errorf("Could not read config file: %w", err)
+			return fmt.Errorf("could not read config file: %w", err)
 		}
 	}
 	for k, v := range GetDefault().Map() {

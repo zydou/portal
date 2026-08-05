@@ -61,7 +61,7 @@ func Receive(version string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer logFile.Close()
+			defer func() { _ = logFile.Close() }()
 
 			pwd := args[0]
 			if !password.IsValid(pwd) {
@@ -140,7 +140,7 @@ func handleReceiveCommandRaw(version string, password string) error {
 	if err != nil {
 		return fmt.Errorf("creating unpacker: %w", err)
 	}
-	defer unpacker.Close()
+	defer func() { _ = unpacker.Close() }()
 	defer file.RemoveTemporaryFiles(file.RECEIVE_TEMP_FILE_NAME_PREFIX)
 
 	input := bufio.NewReader(os.Stdin)

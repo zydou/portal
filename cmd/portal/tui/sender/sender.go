@@ -134,7 +134,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.version.Compare(msg.ServerVersion) {
 		case semver.CompareNewMajor,
 			semver.CompareOldMajor:
-			//lint:ignore ST1005 error string displayed in tui
+			//nolint:staticcheck // error string displayed in tui
 			return m, tui.ErrorCmd(fmt.Errorf("Portal version (%s) incompatible with server version (%s)", m.version, msg.ServerVersion))
 		case semver.CompareNewMinor,
 			semver.CompareNewPatch:
@@ -285,13 +285,13 @@ func (m model) View() string {
 
 	slices.Sort(m.fileNames)
 	btuilder := strings.Builder{}
-	btuilder.WriteString(fmt.Sprintf("%s %d object", readiness, len(m.fileNames)))
+	fmt.Fprintf(&btuilder, "%s %d object", readiness, len(m.fileNames))
 	if len(m.fileNames) > 1 {
 		btuilder.WriteRune('s')
 	}
 	if m.payloadSize != 0 {
 		payloadSize := tui.BoldText(tui.ByteCountSI(m.payloadSize))
-		btuilder.WriteString(fmt.Sprintf(" (%s)", payloadSize))
+		fmt.Fprintf(&btuilder, " (%s)", payloadSize)
 	}
 
 	statusText := btuilder.String()
@@ -386,7 +386,7 @@ func packFilesCmd(files []*os.File) tea.Cmd {
 	return func() tea.Msg {
 		defer func() {
 			for _, f := range files {
-				f.Close()
+				_ = f.Close()
 			}
 		}()
 		tar, size, err := file.PackFiles(files)
@@ -436,7 +436,7 @@ func (m *model) copyReceiverCommand() string {
 	relayAddrKey := "relay"
 	if !config.IsDefault(relayAddrKey) {
 		btuilder.WriteRune(' ')
-		btuilder.WriteString(fmt.Sprintf("--%s", relayAddrKey))
+		fmt.Fprintf(&btuilder, "--%s", relayAddrKey)
 		btuilder.WriteRune(' ')
 		btuilder.WriteString(viper.GetString(relayAddrKey))
 	}

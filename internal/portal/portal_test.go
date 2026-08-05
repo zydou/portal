@@ -42,7 +42,7 @@ func TestE2E(t *testing.T) {
 	in := bytes.NewBufferString(oracle)
 	out := &bytes.Buffer{}
 
-	password, err, errC := portal.Send(context.Background(), in, int64(in.Len()), &config)
+	password, errC, err := portal.Send(context.Background(), in, int64(in.Len()), &config)
 	assert.Nil(t, err)
 
 	err = portal.Receive(context.Background(), out, password, &config)

@@ -40,7 +40,7 @@ func Send(version string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer logFile.Close()
+			defer func() { _ = logFile.Close() }()
 			switch viper.GetString("tui_style") {
 			case config.StyleRich:
 				if err := handleSendCommand(version, args); err != nil {
@@ -100,19 +100,19 @@ func handleSendCommandRaw(version string, filenames []string) error {
 		if err != nil {
 			return fmt.Errorf("unable to open file %q: %w", name, err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		files = append(files, f)
 	}
 	payload, size, err := file.PackFiles(files)
 	if err != nil {
 		return fmt.Errorf("error packing files: %w", err)
 	}
-	defer payload.Close()
+	defer func() { _ = payload.Close() }()
 	defer file.RemoveTemporaryFiles(file.SEND_TEMP_FILE_NAME_PREFIX)
 	cnf := portal.Config{
 		RendezvousAddr: relayAddr,
 	}
-	password, err, errC := portal.Send(ctx, payload, size, &cnf)
+	password, errC, err := portal.Send(ctx, payload, size, &cnf)
 	if err != nil {
 		return fmt.Errorf("doing initial handshake: %w", err)
 	}

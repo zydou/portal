@@ -49,9 +49,9 @@ func (Model) Init() tea.Cmd {
 func (m Model) View() string {
 	bytesProgress := strings.Builder{}
 	bytesProgress.WriteRune('(')
-	bytesProgress.WriteString(fmt.Sprintf("%s/%s", tui.ByteCountSI(m.bytesTransferred), tui.ByteCountSI(m.PayloadSize)))
+	fmt.Fprintf(&bytesProgress, "%s/%s", tui.ByteCountSI(m.bytesTransferred), tui.ByteCountSI(m.PayloadSize))
 	if m.TransferSpeedEstimateBps > 0 {
-		bytesProgress.WriteString(fmt.Sprintf(", %s/s", tui.ByteCountSI(m.TransferSpeedEstimateBps)))
+		fmt.Fprintf(&bytesProgress, ", %s/s", tui.ByteCountSI(m.TransferSpeedEstimateBps))
 	}
 	bytesProgress.WriteRune(')')
 

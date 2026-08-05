@@ -40,7 +40,7 @@ func SendJs() js.Func {
 		}
 		// Top-level promise.
 		transferHandler := promiseHandler(func(resolve, reject js.Value) {
-			password, err, errCh := portal.Send(context.Background(), payload, int64(payload.Len()), cnf)
+			password, errCh, err := portal.Send(context.Background(), payload, int64(payload.Len()), cnf)
 			if err != nil {
 				reject.Invoke(Error.New(err.Error()))
 				return
