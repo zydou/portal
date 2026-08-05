@@ -9,9 +9,6 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -21,20 +18,13 @@ jobs:
       - name: Go setup
         uses: actions/setup-go@v5
         with:
-          go-version: 1.20.1
-
-        # Taken from GoReleaser's own release workflow.
-        # The available Snapcraft Action has some bugs described in the issue below.
-        # The mkdirs are a hack for https://github.com/goreleaser/goreleaser/issues/1715.
-      - name: Setup Snapcraft
-        run: |
-          sudo apt-get update
-          sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
-          mkdir -p $HOME/.cache/snapcraft/download
-          mkdir -p $HOME/.cache/snapcraft/stage-packages
+          go-version: 1.26.5
 
       - name: Release with goreleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
-          args: release --rm-dist
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,6 @@
 module github.com/SpatiumPortae/portal
 
-go 1.20
+go 1.26
 
 require (
 	github.com/alecthomas/chroma v0.10.0
@@ -11,7 +11,6 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/structs v1.1.0
-	github.com/klauspost/pgzip v1.2.6
 	github.com/mattn/go-runewidth v0.0.15
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1

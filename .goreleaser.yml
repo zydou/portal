@@ -1,3 +1,5 @@
+version: 2
+
 project_name: portal
 
 before:
@@ -15,73 +17,17 @@ builds:
       - arm64
     goos:
       - linux
-      - windows
       - darwin
-      - freebsd
-      - netbsd
-      - openbsd
     ldflags: -s -w -X main.version={{.Tag}} -X main.revision={{.ShortCommit}} -X main.date={{.Date}}
 
 archives:
-  - format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
-    replacements:
-      amd64: x86_64
-      darwin: macOS
-      linux: Linux
-      windows: Windows
-      openbsd: OpenBSD
-      netbsd: NetBSD
-      freebsd: FreeBSD
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- if eq .Os "darwin" }}macOS{{ else }}Linux{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
     files:
       - LICENSE
-      - CREDITS
-
-nfpms:
-  - formats:
-      - apk
-      - deb
-      - rpm
-    vendor: "portal"
-    description: "Portal is a quick and easy command-line file transfer utility from any computer to another 🌌 ✨"
-    license: "MIT"
-    package_name: portal
-    replacements:
-      amd64: x86_64
-      darwin: macOS
-      linux: Linux
-      windows: Windows
-      openbsd: OpenBSD
-      netbsd: NetBSD
-      freebsd: FreeBSD
-
-brews:
-  - tap:
-      owner: SpatiumPortae
-      name: homebrew-portal
-    folder: Formula
-    homepage: "https://github.com/SpatiumPortae/portal"
-    description: "Portal is a quick and easy command-line file transfer utility from any computer to another 🌌 ✨"
-    license: "MIT"
-
-# Snap builds are disabled until we get auto-connection of the "home" and "personal-files"
-# plugins manually accepted in https://forum.snapcraft.io/c/store-requests/19.
-#snapcrafts:
-#  - publish: true
-#    summary: Quick and easy command-line file transfer utility from any computer to another.
-#    description: |
-#      Portal is a quick and easy command-line file transfer utility from any computer to another 🌌 ✨.
-#      Transfers are fully encrypted, and made peer-to-peer if possible, with a fallback to a relay
-#      server if not.
-#    grade: stable
-#    confinement: strict
-#    license: MIT
-#    apps:
-#      portal:
-#        command: portal
-#        plugs: ["network", "network-bind", "network-observe", "network-status", "home", "personal-files"]
 
 release:
   prerelease: auto
@@ -90,7 +36,7 @@ checksum:
   name_template: "checksums.txt"
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
