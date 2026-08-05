@@ -52,7 +52,7 @@ type fileReadMsg struct {
 	size  int64
 }
 
-type compressedMsg struct {
+type packedMsg struct {
 	payload io.Reader
 	size    int64
 }
@@ -70,21 +70,20 @@ func WithVersion(version semver.Version) Option {
 }
 
 type model struct {
-	state        tuiState      // defaults to 0 (showPassword)
-	transferType transfer.Type // defaults to 0 (Unknown)
-	readyToSend  bool
-	ctx          context.Context
+	state       tuiState // defaults to 0 (showPassword)
+	readyToSend bool
+	ctx         context.Context
 
 	msgs chan interface{}
 
 	rendezvousAddr string
 
-	password         string
-	fileNames        []string
-	uncompressedSize int64
-	payload          io.Reader
-	payloadSize      int64
-	version          *semver.Version
+	password    string
+	fileNames   []string
+	sourceSize  int64
+	payload     io.Reader
+	payloadSize int64
+	version     *semver.Version
 
 	width            int
 	spinner          spinner.Model
@@ -149,22 +148,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tui.TaskCmd(message, nil)
 
 	case fileReadMsg:
-		m.uncompressedSize = msg.size
+		m.sourceSize = msg.size
 		message := fmt.Sprintf("Read %d objects (%s)", len(m.fileNames), tui.ByteCountSI(msg.size))
 		if len(m.fileNames) == 1 {
 			message = fmt.Sprintf("Read %d object (%s)", len(m.fileNames), tui.ByteCountSI(msg.size))
 		}
-		return m, tui.TaskCmd(message, compressFilesCmd(msg.files))
+		return m, tui.TaskCmd(message, packFilesCmd(msg.files))
 
-	case compressedMsg:
+	case packedMsg:
 		m.payload = msg.payload
 		m.payloadSize = msg.size
 		m.transferProgress.PayloadSize = msg.size
 		m.readyToSend = true
 		m.resetSpinner()
-		message := fmt.Sprintf("Compressed objects (%s)", tui.ByteCountSI(msg.size))
+		message := fmt.Sprintf("Archived objects (%s)", tui.ByteCountSI(msg.size))
 		if len(m.fileNames) == 1 {
-			message = fmt.Sprintf("Compressed object (%s)", tui.ByteCountSI(msg.size))
+			message = fmt.Sprintf("Archived object (%s)", tui.ByteCountSI(msg.size))
 		}
 		return m, tui.TaskCmd(message, m.spinner.Tick)
 
@@ -188,17 +187,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.copyMessageTimer, cmd = m.copyMessageTimer.Update(msg)
 		m.keys.CopyPassword.SetHelp(m.keys.CopyPassword.Help().Key, tui.CopyKeyHelpText)
 		return m, cmd
-
-	case tui.TransferTypeMsg:
-		m.transferType = msg.Type
-		var message string
-		switch m.transferType {
-		case transfer.Direct:
-			message = "Using direct connection to receiver"
-		case transfer.Relay:
-			message = "Using relayed connection to receiver"
-		}
-		return m, tui.TaskCmd(message, listenTransferCmd(m.msgs))
 
 	case tui.SecureMsg:
 		// In the case we are not ready to send yet we pass on the same message.
@@ -286,8 +274,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	// Setup strings to use in view.
-	uncompressed := tui.BoldText(tui.ByteCountSI(m.uncompressedSize))
-	readiness := fmt.Sprintf("%s Compressing objects (%s), preparing to send", m.spinner.View(), uncompressed)
+	source := tui.BoldText(tui.ByteCountSI(m.sourceSize))
+	readiness := fmt.Sprintf("%s Archiving objects (%s), preparing to send", m.spinner.View(), source)
 	if m.readyToSend {
 		readiness = fmt.Sprintf("%s Awaiting receiver, ready to send", m.spinner.View())
 	}
@@ -302,16 +290,8 @@ func (m model) View() string {
 		btuilder.WriteRune('s')
 	}
 	if m.payloadSize != 0 {
-		compressed := tui.BoldText(tui.ByteCountSI(m.payloadSize))
-		btuilder.WriteString(fmt.Sprintf(" (%s)", compressed))
-	}
-
-	switch m.transferType {
-	case transfer.Direct:
-		btuilder.WriteString(" using direct transfer")
-	case transfer.Relay:
-		btuilder.WriteString(" using relayed transfer")
-	case transfer.Unknown:
+		payloadSize := tui.BoldText(tui.ByteCountSI(m.payloadSize))
+		btuilder.WriteString(fmt.Sprintf(" (%s)", payloadSize))
 	}
 
 	statusText := btuilder.String()
@@ -333,7 +313,7 @@ func (m model) View() string {
 			tui.PadText + m.help.View(m.keys) + "\n\n"
 
 	case showFinished:
-		finishedText := fmt.Sprintf("Sent %d object(s) (%s compressed)", len(m.fileNames), tui.ByteCountSI(m.payloadSize))
+		finishedText := fmt.Sprintf("Sent %d object(s) (%s)", len(m.fileNames), tui.ByteCountSI(m.payloadSize))
 		return tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(finishedText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
@@ -401,9 +381,8 @@ func readFilesCmd(paths []string) tea.Cmd {
 	}
 }
 
-// compressFilesCmd is a command that compresses and archives the
-// provided files.
-func compressFilesCmd(files []*os.File) tea.Cmd {
+// packFilesCmd is a command that archives the provided files.
+func packFilesCmd(files []*os.File) tea.Cmd {
 	return func() tea.Msg {
 		defer func() {
 			for _, f := range files {
@@ -414,7 +393,7 @@ func compressFilesCmd(files []*os.File) tea.Cmd {
 		if err != nil {
 			return tui.ErrorMsg(err)
 		}
-		return compressedMsg{payload: tar, size: size}
+		return packedMsg{payload: tar, size: size}
 	}
 }
 
@@ -424,8 +403,6 @@ func listenTransferCmd(msgs chan interface{}) tea.Cmd {
 	return func() tea.Msg {
 		msg := <-msgs
 		switch v := msg.(type) {
-		case transfer.Type:
-			return tui.TransferTypeMsg{Type: v}
 		case transfer.MsgType:
 			return tui.TransferStateMessage{State: v}
 		case int:
@@ -444,7 +421,7 @@ func (m *model) resetSpinner() {
 	if m.readyToSend {
 		m.spinner.Spinner = tui.WaitingSpinner
 	} else {
-		m.spinner.Spinner = tui.CompressingSpinner
+		m.spinner.Spinner = tui.PackingSpinner
 	}
 	if m.state == showSendingProgress {
 		m.spinner.Spinner = tui.TransferSpinner

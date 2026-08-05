@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/klauspost/pgzip"
 )
 
 const SEND_TEMP_FILE_NAME_PREFIX = "portal-send-temp"
@@ -30,17 +28,15 @@ func ReadFiles(fileNames []string) ([]*os.File, error) {
 	return files, nil
 }
 
-// PackFiles tars and gzip-compresses files into a temporary file, returning it
-// along with the resulting size
+// PackFiles tars files into a temporary file, returning it along with the resulting size
 func PackFiles(files []*os.File) (*os.File, int64, error) {
-	// chained writers -> writing to tw writes to gw -> writes to temporary file
+	// chained writers -> writing to tw writes to temporary file
 	tempFile, err := os.CreateTemp(os.TempDir(), SEND_TEMP_FILE_NAME_PREFIX)
 	if err != nil {
 		return nil, 0, err
 	}
 	tempFileWriter := bufio.NewWriter(tempFile)
-	gw := pgzip.NewWriter(tempFileWriter)
-	tw := tar.NewWriter(gw)
+	tw := tar.NewWriter(tempFileWriter)
 
 	for _, file := range files {
 		err := addToTarArchive(tw, file)
@@ -49,7 +45,6 @@ func PackFiles(files []*os.File) (*os.File, int64, error) {
 		}
 	}
 	tw.Close()
-	gw.Close()
 	tempFileWriter.Flush()
 	fileInfo, err := tempFile.Stat()
 	if err != nil {
@@ -69,32 +64,26 @@ var ErrUnpackNoHeader = errors.New("no header in tar archive")
 var ErrUnpackFileExists = errors.New("file exists")
 var ErrUninitialized = errors.New("unpacker is uninitialized")
 
-// Unpacker defines an encapsulated unit for unpacking a compressed
+// Unpacker defines an encapsulated unit for unpacking a
 // tar archive
 type Unpacker struct {
 	prompt bool // prompt defines whether we should prompt the user to overwrite files
 	cwd    string
 
-	gr *pgzip.Reader
 	tr *tar.Reader
 	r  io.ReadCloser
 }
 
 func NewUnpacker(prompt bool, r io.ReadCloser) (*Unpacker, error) {
-	gr, err := pgzip.NewReader(r)
-	if err != nil {
-		return nil, err
-	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
-	tr := tar.NewReader(gr)
+	tr := tar.NewReader(r)
 
 	return &Unpacker{
 		prompt: prompt,
 		cwd:    cwd,
-		gr:     gr,
 		tr:     tr,
 		r:      r,
 	}, nil
@@ -102,11 +91,6 @@ func NewUnpacker(prompt bool, r io.ReadCloser) (*Unpacker, error) {
 
 // Close closes all underlying readers of the unpacker.
 func (u *Unpacker) Close() error {
-	if u.gr != nil {
-		if err := u.gr.Close(); err != nil {
-			return err
-		}
-	}
 	if u.r != nil {
 		if err := u.r.Close(); err != nil {
 			return err

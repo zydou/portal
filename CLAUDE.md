@@ -6,9 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Portal is a command-line file transfer tool (Go). Two peers (`sender`/`receiver`) exchange a
 human-readable password (e.g. `1-inertia-elliptical-celestial`), perform a PAKE2 key exchange
-through a public "rendezvous" relay server, and then transfer files either directly (P2P, e.g.
-same LAN) or through the relay if direct connection isn't possible. The relay never sees file
-contents or the plaintext password.
+through a self-hosted "rendezvous" relay server, and then transfer files through that relay.
+The relay never sees file contents or the plaintext password.
+
+This is a personal fork of the upstream project, trimmed down for a single-user, self-hosted
+deployment: the original P2P direct-connection path (sender/receiver probing for a LAN direct
+connection before falling back to the relay) and the gzip compression of the file payload have
+both been removed — see "Deviations from upstream" below.
 
 ## Common commands
 
@@ -36,8 +40,10 @@ make image   # docker build --tag rendezvous:latest
 make serve   # image + docker run -dp 8080:8080
 ```
 
-CI (`.github/workflows/ci.yml`) runs `lint`, `build`, `build-wasm`, and `test` on every push;
-`test-e2e` runs instead of `test` for pull requests. Go version pinned to 1.20.x.
+CI (`.github/workflows/ci.yml`) runs `lint`, `build`, `build-wasm`, and `test` (full Docker-based
+e2e suite, `make test-e2e`) on every push — this is a personal fork with no PR workflow, so there's
+no separate PR-only e2e gate. Go version pinned to 1.26.x. `.github/workflows/release.yml` builds
+and publishes GitHub releases (Linux/macOS, amd64/arm64 only) via `.goreleaser.yml` on `v*.*.*` tags.
 
 ## Architecture
 
@@ -54,8 +60,9 @@ back-to-back over the same websocket connection:
 
 1. **rendezvous protocol** — establishes the connection through the relay and performs the PAKE2
    handshake (password hashing, PAKE bytes, salt exchange) to derive a shared session key.
-2. **transfer protocol** — once a secure channel exists, negotiates direct-vs-relay transfer and
-   moves the actual payload.
+2. **transfer protocol** — once a secure channel exists, moves the actual payload through the
+   relay (`ReceiverHandshake` → `SenderHandshake` → `ReceiverRequestPayload` → payload bytes →
+   `SenderPayloadSent`/`ReceiverPayloadAck` → `SenderClosing`/`ReceiverClosingAck`).
 
 ### Connection wrapping (`internal/conn`)
 
@@ -63,33 +70,24 @@ back-to-back over the same websocket connection:
 protocol-aware `ReadMsg`/`WriteMsg` helpers with expected-type validation:
 - `Rendezvous` — plaintext JSON messages to/from the relay.
 - `Transfer` — same, but encrypted/decrypted via `crypt.go` using the PAKE-derived session key
-  (`TransferFromSession`) or a raw key (`TransferFromKey`, used once a direct connection exists).
+  (`TransferFromSession`).
 
 ### Relay server (`internal/rendezvous`)
 
 `Server` (server.go) wires up an `http.Server` + `gorilla/mux` router (routes.go) and holds
 `Mailboxes` (mailbox.go) — a `sync.Map` pairing a sender and receiver by their hashed password,
-used to relay messages between the two during the handshake and, if direct transfer isn't
-possible, for the whole transfer. `handlers.go` implements `/establish-sender` and
-`/establish-receiver`; `id.go` allocates the numeric ID that seeds the generated password.
-Serves an embedded landing page (`templates/`) and a `/version` endpoint checked by clients
-against `internal/semver` for compatibility.
+used to relay every message between the two, from the handshake through the entire file
+transfer. `handlers.go` implements `/establish-sender` and `/establish-receiver`; `id.go`
+allocates the numeric ID that seeds the generated password. Serves an embedded landing page
+(`templates/`) and a `/version` endpoint checked by clients against `internal/semver` for
+compatibility.
 
 ### Clients (`internal/sender`, `internal/receiver`)
 
-Each package mirrors the same three-step sequence, called from `internal/portal`:
-`ConnectRendezvous` (dial the relay, get an ID, generate+hash the password) →
-`SecureConnection` (PAKE2 exchange, derive session key/salt) → `Transfer`/`Receive` (the payload).
-
-Direct-vs-relay is negotiated in the transfer step: the sender always spins up a local
-websocket server (`sender/server.go`, started in `transfer.go`) advertising its LAN IP/port;
-the receiver tries to dial it directly with a short linear backoff (`probeSender` in
-`receive.go`) and falls back to relaying through the rendezvous connection if that fails.
-
-**Build-tag platform split**: `transfer.go`/`receive.go` (tag `//go:build !js`) implement the
-native, direct-capable path; `transfer_wasm.go`/`receive_wasm.go` implement the `GOOS=js` (WASM,
-browser) path, which is always relay-only since a browser can't open a listening TCP server.
-When touching sender/receiver transfer logic, check both variants stay consistent.
+Each package is a single file implementing the same three-step sequence, called from
+`internal/portal`: `ConnectRendezvous` (dial the relay, get an ID, generate+hash the password) →
+`SecureConnection` (PAKE2 exchange, derive session key/salt) → `Transfer`/`Receive` (the
+payload, always relayed through the rendezvous connection).
 
 ### `internal/portal`
 
@@ -100,9 +98,9 @@ build — role-specific protocol logic belongs in `internal/sender`/`internal/re
 ### Supporting packages
 
 - `internal/password` — generates/validates the human-readable password from `data/words.go`.
-- `internal/file` — tars + parallel-gzips (`pgzip`) files/directories for send (`PackFiles`,
-  resolving symlinks), and streams-unpacks on receive (`Unpacker`/`Committer`), optionally
-  prompting before overwriting existing files.
+- `internal/file` — tars (uncompressed) files/directories for send (`PackFiles`, resolving
+  symlinks), and streams-unpacks on receive (`Unpacker`/`Committer`), optionally prompting
+  before overwriting existing files.
 - `internal/semver` — version comparison used to reject transfers between incompatible major
   versions of sender/receiver/relay.
 - `internal/logger` — `zap`-based logger and HTTP middleware for the relay server.
@@ -118,4 +116,20 @@ between `rich` and `raw` rendering.
 ### WASM (`cmd/wasm`)
 
 Builds a browser-side receiver (`GOOS=js GOARCH=wasm`) served from the relay's landing page,
-reusing `internal/portal`/`internal/receiver` with the WASM-tagged transfer files.
+reusing `internal/portal`/`internal/receiver` as-is — no platform-specific build tags remain in
+those packages since the transfer path is relay-only on every platform.
+
+## Deviations from upstream
+
+This fork intentionally removed two things present in the original project:
+
+- **P2P direct transfer**: upstream had the sender spin up a local websocket server advertising
+  its LAN IP/port, and the receiver would probe it with a short backoff before falling back to
+  the relay. Since this fork always runs against a self-hosted relay that both peers can reach
+  but that can't reach each other directly, that probing was pure added latency. It's gone from
+  the transfer protocol, the clients, and the TUI (no more "direct vs relayed" messaging).
+- **gzip compression**: upstream tarred *and* gzip-compressed (`pgzip`, parallel gzip) the
+  payload before sending. Compression cost was dominating transfer time for already-compressed
+  files (video, archives, etc.), so `internal/file.PackFiles`/`Unpacker` now only tar — no
+  compression layer — preserving directory structure and multi-file support without the CPU
+  overhead.

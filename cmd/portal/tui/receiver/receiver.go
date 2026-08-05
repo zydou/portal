@@ -34,7 +34,7 @@ type tuiState int
 const (
 	showEstablishing tuiState = iota
 	showReceivingProgress
-	showDecompressing
+	showUnpacking
 	showOverwritePrompt
 	showFinished
 )
@@ -72,19 +72,18 @@ func WithVersion(version semver.Version) Option {
 }
 
 type model struct {
-	state        tuiState
-	transferType transfer.Type
-	password     string
+	state    tuiState
+	password string
 
 	ctx  context.Context
 	msgs chan interface{}
 
 	rendezvousAddr string
 
-	receivedFiles           []string
-	payloadSize             int64
-	decompressedPayloadSize int64
-	version                 *semver.Version
+	receivedFiles       []string
+	payloadSize         int64
+	unpackedPayloadSize int64
+	version             *semver.Version
 
 	unpacker *file.Unpacker
 	commiter file.Committer
@@ -160,17 +159,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.transferProgress.PayloadSize = msg.size
 		return m, listenReceiveCmd(m.msgs)
 
-	case tui.TransferTypeMsg:
-		var message string
-		m.transferType = msg.Type
-		switch m.transferType {
-		case transfer.Direct:
-			message = "Using direct connection to sender"
-		case transfer.Relay:
-			message = "Using relayed connection to sender"
-		}
-		return m, tui.TaskCmd(message, listenReceiveCmd(m.msgs))
-
 	case tui.ProgressMsg:
 		cmds := []tea.Cmd{listenReceiveCmd(m.msgs)}
 		if m.state != showReceivingProgress {
@@ -185,7 +173,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 
 	case receiveDoneMsg:
-		m.state = showDecompressing
+		m.state = showUnpacking
 		m.resetSpinner()
 
 		message := fmt.Sprintf("Transfer completed in %s with average transfer speed %s/s",
@@ -206,7 +194,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case commitMsg:
 		m.receivedFiles = append(m.receivedFiles, msg.name)
-		m.decompressedPayloadSize += msg.size
+		m.unpackedPayloadSize += msg.size
 		return m, m.unpackCmd()
 
 	case unpackPromptMsg:
@@ -246,7 +234,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			switch {
 			case key.Matches(msg, m.keys.OverwritePromptYes, m.keys.OverwritePromptNo, m.keys.OverwritePromptConfirm):
-				m.state = showDecompressing
+				m.state = showUnpacking
 				m.keys.OverwritePromptYes.SetEnabled(false)
 				m.keys.OverwritePromptNo.SetEnabled(false)
 				m.keys.OverwritePromptConfirm.SetEnabled(false)
@@ -291,15 +279,8 @@ func (m model) View() string {
 			tui.PadText + m.help.View(m.keys) + "\n\n"
 
 	case showReceivingProgress:
-		var transferType string
-		if m.transferType == transfer.Direct {
-			transferType = "direct"
-		} else {
-			transferType = "relayed"
-		}
-
 		payloadSize := tui.BoldText(tui.ByteCountSI(m.payloadSize))
-		receivingText := fmt.Sprintf("%s Receiving objects (%s) using %s transfer", m.spinner.View(), payloadSize, transferType)
+		receivingText := fmt.Sprintf("%s Receiving objects (%s)", m.spinner.View(), payloadSize)
 		return tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(receivingText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
@@ -313,11 +294,11 @@ func (m model) View() string {
 			tui.PadText + m.overwritePrompt.View() + "\n\n" +
 			tui.PadText + m.help.View(m.keys) + "\n\n"
 
-	case showDecompressing:
+	case showUnpacking:
 		payloadSize := tui.BoldText(tui.ByteCountSI(m.payloadSize))
-		decompressingText := fmt.Sprintf("%s Decompressing payload (%s compressed) and writing to disk", m.spinner.View(), payloadSize)
+		unpackingText := fmt.Sprintf("%s Unpacking payload (%s) and writing to disk", m.spinner.View(), payloadSize)
 		return tui.PadText + tui.LogSeparator(m.width) +
-			tui.PadText + tui.InfoStyle(decompressingText) + "\n\n" +
+			tui.PadText + tui.InfoStyle(unpackingText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			tui.PadText + m.help.View(m.keys) + "\n\n"
 
@@ -326,7 +307,7 @@ func (m model) View() string {
 		if len(m.receivedFiles) == 0 || len(m.receivedFiles) > 1 {
 			oneOrMoreFiles += "s"
 		}
-		finishedText := fmt.Sprintf("Received %d %s (%s decompressed)", len(m.receivedFiles), oneOrMoreFiles, tui.ByteCountSI(m.decompressedPayloadSize))
+		finishedText := fmt.Sprintf("Received %d %s (%s unpacked)", len(m.receivedFiles), oneOrMoreFiles, tui.ByteCountSI(m.unpackedPayloadSize))
 		return tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(finishedText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
@@ -379,8 +360,6 @@ func listenReceiveCmd(msgs chan interface{}) tea.Cmd {
 	return func() tea.Msg {
 		msg := <-msgs
 		switch v := msg.(type) {
-		case transfer.Type:
-			return tui.TransferTypeMsg{Type: v}
 		case transfer.MsgType:
 			return tui.TransferStateMessage{State: v}
 		case int:
@@ -454,8 +433,8 @@ func (m *model) resetSpinner() {
 	if m.state == showEstablishing || m.state == showOverwritePrompt {
 		m.spinner.Spinner = tui.WaitingSpinner
 	}
-	if m.state == showDecompressing {
-		m.spinner.Spinner = tui.CompressingSpinner
+	if m.state == showUnpacking {
+		m.spinner.Spinner = tui.PackingSpinner
 	}
 	if m.state == showReceivingProgress {
 		m.spinner.Spinner = tui.ReceivingSpinner

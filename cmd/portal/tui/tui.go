@@ -25,9 +25,6 @@ type ProgressMsg int
 type SecureMsg struct {
 	Conn conn.Transfer
 }
-type TransferTypeMsg struct {
-	Type transfer.Type
-}
 
 type TransferStateMessage struct {
 	State transfer.MsgType
@@ -44,7 +41,7 @@ var WaitingSpinner = spinner.Spinner{
 	FPS:    time.Second / 12,
 }
 
-var CompressingSpinner = spinner.Spinner{
+var PackingSpinner = spinner.Spinner{
 	Frames: []string{"┉┉┉", "┅┅┅", "┄┄┄", "┉ ┉", "┅ ┅", "┄ ┄", " ┉ ", " ┉ ", " ┅ ", " ┅ ", " ┄ "},
 	FPS:    time.Second / 3,
 }

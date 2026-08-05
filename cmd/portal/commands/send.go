@@ -21,7 +21,7 @@ func Send(version string) *cobra.Command {
 	sendCmd := &cobra.Command{
 		Use:   "send file1 file2...",
 		Short: "Send one or more files",
-		Long:  "The send command adds one or more files to be sent. Files are archived and compressed before sending.",
+		Long:  "The send command adds one or more files to be sent. Files are archived before sending.",
 		Args:  cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := viper.BindPFlag("relay", cmd.Flags().Lookup("relay")); err != nil {

@@ -80,16 +80,11 @@ To receive those files:
 portal receive 1-intertia-elliptical-celestial
 ```
 
-The two clients will establish a connection through a relay server. The file transfer will then commence with a direct or relayed connection, depending on what's possible.
+The two clients will establish a connection through a relay server, which relays the (encrypted) file transfer.
 
 ## What it looks like ✨
 
 The sender **(top)** sends a folder and three files to the receiver **(bottom)**.
-<br><br>
-In this case, as you can see in the event log, the transfer is made using **direct transfer**. That means
-that the files are sent **directly** from one client to the other, _no middlemen involved_. 
-<br><br>
-As it happens, these computers are in the same local network, and `portal` recognizes this.
 
 ![demo](./assets/demo.gif)
 
@@ -98,10 +93,7 @@ As it happens, these computers are in the same local network, and `portal` recog
 `portal` provides:
 
 - End-to-end encryption using [PAKE2](https://en.wikipedia.org/wiki/Password-authenticated_key_agreement)
-- Direct transfer of files if possible (e.g. sender and receiver are in the same local network)
-- Fallback to relay server if sender and receiver cannot connect directly
-- Parallel gzip compression of files for faster and more efficient transfers
-- Hosting your own relay (we'd appreciate it if you plan to send a lot of data!)
+- Transfer through a self-hosted relay server
 - Configurability and shell completions
 - A shiny UI ⭐✨ to gaze your eyes upon while you wait for your files
 
@@ -229,10 +221,7 @@ The communication works as follows:
 - When both the `sender` and the `receiver` have sent the hashed password to the `relay`, the cryptographic exchange starts
 - During the cryptographic exchange, the `relay`, well, relays messages from the `sender` to the `receiver` and vice-versa
 - Once the cryptographic exchange is done, every message sent by the `sender` and `receiver` is encrypted, and the `relay` cannot see their contents
-- The file transfer is about to begin, and can commence in two ways: 
-  1. The `sender` and `receiver` are in the same local network or can be reached directly by IP in some other way
-     - In this case, the `sender` and `receiver` will happily send the files to each other directly. The `relay` will close down for this connection.
-  2. The `sender` and `receiver` are not on the same local network, or cannot reach each other directly. The transfer will go through the `relay`, which will continue to relay encrypted messages until the file transfer is completed
+- The file transfer commences, with the `relay` relaying the encrypted payload between `sender` and `receiver` until the transfer is completed
 
 </details>
 
@@ -258,7 +247,7 @@ when on different major versions, for instance.
 
 a big thank you to [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) for greatly inspiring the concept of Portal.
 
-[nhooyr/websocket](https://github.com/nhooyr/websocket), [shollz/pake](https://github.com/schollz/pake), [charmbracelet/bubbles](https://github.com/charmbracelet/bubbles), [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea), [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss), [muesli/reflow](https://github.com/muesli/reflow), [klauspost/pgzip](https://github.com/klauspost/pgzip) and many, many more.
+[nhooyr/websocket](https://github.com/nhooyr/websocket), [shollz/pake](https://github.com/schollz/pake), [charmbracelet/bubbles](https://github.com/charmbracelet/bubbles), [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea), [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss), [muesli/reflow](https://github.com/muesli/reflow) and many, many more.
 
 ### DigitalOcean <3
 

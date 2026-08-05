@@ -85,8 +85,7 @@ func SecureConnection(ctx context.Context, rc conn.Rendezvous, pass string) (con
 	return conn.TransferFromSession(rc.Conn, session, msg.Payload.Salt), nil
 }
 
-// Receive receives the payload over the transfer connection and writes it into the provided destination.
-// The Transfer can either be direct or using a relay.
+// Receive receives the payload over the relayed transfer connection and writes it into the provided destination.
 // The msgs channel communicates information about the receiving process while running.
 func Receive(ctx context.Context, tc conn.Transfer, dst io.Writer, msgs ...chan interface{}) error {
 	if err := tc.WriteMsg(ctx, transfer.Msg{Type: transfer.ReceiverHandshake}); err != nil {
@@ -101,7 +100,28 @@ func Receive(ctx context.Context, tc conn.Transfer, dst io.Writer, msgs ...chan 
 	if len(msgs) > 0 {
 		msgs[0] <- msg.Payload.PayloadSize
 	}
-	return doReceive(ctx, tc, fmt.Sprintf("%s:%d", msg.Payload.IP, msg.Payload.Port), dst, msgs...)
+
+	if err := tc.WriteMsg(ctx, transfer.Msg{Type: transfer.ReceiverRequestPayload}); err != nil {
+		return err
+	}
+	if err := receivePayload(ctx, tc, dst, msgs...); err != nil {
+		return err
+	}
+
+	// Closing handshake.
+	if err := tc.WriteMsg(ctx, transfer.Msg{Type: transfer.ReceiverPayloadAck}); err != nil {
+		return err
+	}
+	if _, err := tc.ReadMsg(ctx, transfer.SenderClosing); err != nil {
+		return err
+	}
+	if err := tc.WriteMsg(ctx, transfer.Msg{Type: transfer.ReceiverClosingAck}); err != nil {
+		return err
+	}
+
+	// Tell rendezvous to close the connection.
+	rc := conn.Rendezvous{Conn: tc.Conn}
+	return rc.WriteMsg(ctx, rendezvous.Msg{Type: rendezvous.ReceiverToRendezvousClose})
 }
 
 // receivePayload receives the payload over the provided connection and writes it into the desired location.
