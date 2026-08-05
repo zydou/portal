@@ -6,7 +6,7 @@ on:
       - "**"
 
 jobs:
-  lint:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
@@ -25,51 +25,8 @@ jobs:
           version: v2.12
           args: -v --timeout=5m -E misspell
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Go setup
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.26.5
-
       - name: Build
         run: make build
 
-  test:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Go setup
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.26.5
-
       - name: Test
         run: make test
-
-  build-wasm:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Go setup
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.26.5
-
-      - name: Build
-        run: make build-wasm

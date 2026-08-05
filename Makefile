@@ -1,4 +1,4 @@
-.PHONY: serve lint test test-e2e build-wasm image
+.PHONY: serve lint test test-e2e image
 
 LINKER_FLAGS = '-s -X main.version=${PORTAL_VERSION}'
 
@@ -10,9 +10,6 @@ build:
 
 build-production:
 	CGO_ENABLED=0 go build -ldflags=${LINKER_FLAGS} -o portal ./cmd/portal/
-
-build-wasm:
-	GOOS=js GOARCH=wasm go build -o portal.wasm ./cmd/wasm/main.go
 
 image:
 	docker build --build-arg version=${PORTAL_VERSION} --tag rendezvous:latest .

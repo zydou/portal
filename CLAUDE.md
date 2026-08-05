@@ -20,9 +20,6 @@ both been removed — see "Deviations from upstream" below.
 # Build the CLI (PORTAL_VERSION is a semver string, injected via -ldflags; required)
 PORTAL_VERSION=v1.x.x make build
 
-# Build the WASM receiver used by the relay's web page
-make build-wasm
-
 # Lint (matches CI: golangci-lint with misspell enabled)
 make lint
 
@@ -40,17 +37,17 @@ make image   # docker build --tag rendezvous:latest
 make serve   # image + docker run -dp 8080:8080
 ```
 
-CI (`.github/workflows/ci.yml`) runs `lint`, `build`, `build-wasm`, and `test` (unit tests only,
-`make test`, no Docker) on every push. Go version pinned to 1.26.x. `.github/workflows/release.yml`
-builds and publishes GitHub releases (Linux/macOS, amd64/arm64 only) via `.goreleaser.yml` on
-`v*.*.*` tags.
+CI (`.github/workflows/ci.yml`) is a single job that runs lint, build, and test (unit tests only,
+`make test`, no Docker) sequentially on every push. Go version pinned to 1.26.x.
+`.github/workflows/release.yml` builds and publishes GitHub releases (Linux/macOS, amd64/arm64
+only) via `.goreleaser.yml` on `v*.*.*` tags.
 
 ## Architecture
 
 The codebase is split into a **protocol layer** (wire messages only, no logic) and packages that
 implement the two roles that speak that protocol: the **rendezvous relay server** and the
 **sender/receiver clients**. `internal/portal` is the thin public API tying client-side steps
-together; `cmd/portal` and `cmd/wasm` are the two entry points that consume it.
+together; `cmd/portal` is the entry point that consumes it.
 
 ### Protocol layer (`protocol/rendezvous`, `protocol/transfer`)
 
@@ -92,8 +89,8 @@ payload, always relayed through the rendezvous connection).
 ### `internal/portal`
 
 Public `Send`/`Receive` functions that merge a partial `Config` over `defaultConfig` and drive
-the client packages above. This is the shared entry point used by both the CLI and the WASM
-build — role-specific protocol logic belongs in `internal/sender`/`internal/receiver`, not here.
+the client packages above. This is the entry point used by `cmd/portal` — role-specific protocol
+logic belongs in `internal/sender`/`internal/receiver`, not here.
 
 ### Supporting packages
 
@@ -113,15 +110,9 @@ with defaults defined there. `cmd/portal/tui` holds the Bubble Tea UI (separate 
 views, a shared file table and transfer-progress component); the `-s/--tui-style` flag switches
 between `rich` and `raw` rendering.
 
-### WASM (`cmd/wasm`)
-
-Builds a browser-side receiver (`GOOS=js GOARCH=wasm`) served from the relay's landing page,
-reusing `internal/portal`/`internal/receiver` as-is — no platform-specific build tags remain in
-those packages since the transfer path is relay-only on every platform.
-
 ## Deviations from upstream
 
-This fork intentionally removed two things present in the original project:
+This fork intentionally removed things present in the original project:
 
 - **P2P direct transfer**: upstream had the sender spin up a local websocket server advertising
   its LAN IP/port, and the receiver would probe it with a short backoff before falling back to
@@ -133,3 +124,6 @@ This fork intentionally removed two things present in the original project:
   files (video, archives, etc.), so `internal/file.PackFiles`/`Unpacker` now only tar — no
   compression layer — preserving directory structure and multi-file support without the CPU
   overhead.
+- **WASM/browser receiver**: upstream had a `cmd/wasm` entry point building a `GOOS=js` binary
+  for a browser-based receiver served from the relay's landing page. Not needed for this fork's
+  CLI-only use case, so it's gone along with the `build-wasm` Make target and CI job.
