@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SpatiumPortae/portal/internal/conn"
-	"github.com/SpatiumPortae/portal/internal/semver"
-	"github.com/SpatiumPortae/portal/protocol/transfer"
+	"github.com/zydou/portal/internal/conn"
+	"github.com/zydou/portal/internal/semver"
+	"github.com/zydou/portal/protocol/transfer"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

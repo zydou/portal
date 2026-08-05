@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"math"
 
-	"github.com/SpatiumPortae/portal/protocol/rendezvous"
-	"github.com/SpatiumPortae/portal/protocol/transfer"
+	"github.com/zydou/portal/protocol/rendezvous"
+	"github.com/zydou/portal/protocol/transfer"
 	"nhooyr.io/websocket"
 )
 

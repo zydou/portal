@@ -10,52 +10,20 @@ a command-line file transfer utility for sending files from any computer to anot
 <br>
 
 <p align="center">
-      <a href="https://github.com/SpatiumPortae/portal/releases"><img src="https://img.shields.io/github/v/release/spatiumportae/portal?color=%231777AB&label=version"></a>
+      <a href="https://github.com/zydou/portal/releases"><img src="https://img.shields.io/github/v/release/zydou/portal?color=%231777AB&label=version"></a>
       &nbsp;
-      <a href="https://github.com/SpatiumPortae/portal/actions"><img src="https://img.shields.io/github/actions/workflow/status/SpatiumPortae/portal/ci.yml?branch=master&color=%231777AB"></a>
+      <a href="https://github.com/zydou/portal/actions"><img src="https://img.shields.io/github/actions/workflow/status/zydou/portal/ci.yml?branch=master&color=%231777AB"></a>
       &nbsp;
-      <a href="https://github.com/SpatiumPortae/portal/blob/master/LICENSE"><img src="https://img.shields.io/github/license/spatiumportae/portal?color=%231777AB"></a>
+      <a href="https://github.com/zydou/portal/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zydou/portal?color=%231777AB"></a>
 </p>
 
 ## Installation
 
-On macOS/Linux, if you are using [Homebrew](https://brew.sh/)
-```bash
-brew install portal
-```
-
-On Windows, if you are using [Scoop](https://scoop.sh)
+Grab the [latest release](https://github.com/zydou/portal/releases/latest) for your platform (Linux/macOS,
+amd64/arm64), or install with:
 
 ```bash
-scoop install portal
-```
-
-On Windows, if you are using [WinGet](https://github.com/microsoft/winget-cli)
-```bash
-winget install SpatiumPortae.portal
-```
-
-On Arch Linux (AUR)
-```bash
-yay -S portal-bin
-```
-
-<!-- 
-// Hidden until the snap build is granted the right filesystem permissions.
-On the Snap Store
-```bash
-sudo snap install portal
-```
--->
-
-On any platform, you can get the [latest release manually](https://github.com/SpatiumPortae/portal/releases/latest), or simply run
-
-```bash
-curl -sL portal.spatiumportae.com | bash
-```
-or
-```bash
-wget -qO - portal.spatiumportae.com | bash
+curl -sL https://raw.githubusercontent.com/zydou/portal/master/scripts/install.sh | bash
 ```
 
 ## How it works
@@ -165,7 +133,7 @@ As evident by the file extension, the config is a simple [YAML](https://yaml.org
 #### Default configuration
 ```yaml
 # The URL of the relay server.
-relay: portal.spatiumportae.com
+relay: portal.example.com
 # Log debug output to file.
 verbose: false
 # Prompt for overwriting duplicates when receiving files.
@@ -248,12 +216,4 @@ when on different major versions, for instance.
 a big thank you to [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) for greatly inspiring the concept of Portal.
 
 [nhooyr/websocket](https://github.com/nhooyr/websocket), [shollz/pake](https://github.com/schollz/pake), [charmbracelet/bubbles](https://github.com/charmbracelet/bubbles), [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea), [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss), [muesli/reflow](https://github.com/muesli/reflow) and many, many more.
-
-### DigitalOcean <3
-
-A **special thanks** to our sponsors [DigitalOcean](https://m.do.co/c/73a491fda077).
-<br><br>
-The public relay available for everyone to use is...
-
-[![DigitalOcean Referral Badge](https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%203.svg)](https://www.digitalocean.com/?refcode=73a491fda077&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
 

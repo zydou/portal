@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/SpatiumPortae/portal/internal/conn"
-	"github.com/SpatiumPortae/portal/internal/password"
-	"github.com/SpatiumPortae/portal/protocol/rendezvous"
-	"github.com/SpatiumPortae/portal/protocol/transfer"
+	"github.com/zydou/portal/internal/conn"
+	"github.com/zydou/portal/internal/password"
+	"github.com/zydou/portal/protocol/rendezvous"
+	"github.com/zydou/portal/protocol/transfer"
 	"github.com/schollz/pake/v3"
 	"nhooyr.io/websocket"
 )

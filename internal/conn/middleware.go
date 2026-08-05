@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/SpatiumPortae/portal/internal/logger"
+	"github.com/zydou/portal/internal/logger"
 	"go.uber.org/zap"
 	"nhooyr.io/websocket"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/SpatiumPortae/portal/cmd/portal/commands"
-	"github.com/SpatiumPortae/portal/cmd/portal/config"
+	"github.com/zydou/portal/cmd/portal/commands"
+	"github.com/zydou/portal/cmd/portal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -16,12 +16,12 @@ function install {
 █▀▀ █▄█ █▀▄  █  █▀█ █▄▄
 	"
 	# variables
-	USER="SpatiumPortae"
+	USER="zydou"
 	PROG="portal"
 	MOVE="true"
 	OUT_DIR="/usr/local/bin"
-	GH="https://github.com/SpatiumPortae/portal"
-	GH_API="https://api.github.com/repos/SpatiumPortae/portal"
+	GH="https://github.com/zydou/portal"
+	GH_API="https://api.github.com/repos/zydou/portal"
 
 	# bash check
 	[ ! "$BASH_VERSION" ] && fail "use bash to run the $PROG installation script"

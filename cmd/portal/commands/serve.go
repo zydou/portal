@@ -3,8 +3,8 @@ package commands
 import (
 	"fmt"
 
-	"github.com/SpatiumPortae/portal/internal/rendezvous"
-	"github.com/SpatiumPortae/portal/internal/semver"
+	"github.com/zydou/portal/internal/rendezvous"
+	"github.com/zydou/portal/internal/semver"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SpatiumPortae/portal/cmd/portal/tui"
+	"github.com/zydou/portal/cmd/portal/tui"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/errors"

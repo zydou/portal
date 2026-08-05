@@ -9,7 +9,7 @@ import (
 	math_rand "math/rand"
 	"regexp"
 
-	"github.com/SpatiumPortae/portal/data"
+	"github.com/zydou/portal/data"
 	"golang.org/x/exp/slices"
 )
 

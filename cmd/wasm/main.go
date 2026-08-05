@@ -7,7 +7,7 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/SpatiumPortae/portal/internal/portal"
+	"github.com/zydou/portal/internal/portal"
 )
 
 // JS constructors

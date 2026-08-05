@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/SpatiumPortae/portal/cmd/portal/config"
+	"github.com/zydou/portal/cmd/portal/config"
 	"github.com/alecthomas/chroma/quick"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

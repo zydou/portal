@@ -1,4 +1,4 @@
-module github.com/SpatiumPortae/portal
+module github.com/zydou/portal
 
 go 1.26
 

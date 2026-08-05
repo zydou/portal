@@ -3,7 +3,7 @@ package semver_test
 import (
 	"testing"
 
-	"github.com/SpatiumPortae/portal/internal/semver"
+	"github.com/zydou/portal/internal/semver"
 	"github.com/stretchr/testify/assert"
 )
 

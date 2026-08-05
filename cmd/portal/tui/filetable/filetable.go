@@ -3,8 +3,8 @@ package filetable
 import (
 	"math"
 
-	"github.com/SpatiumPortae/portal/cmd/portal/tui"
-	"github.com/SpatiumPortae/portal/internal/file"
+	"github.com/zydou/portal/cmd/portal/tui"
+	"github.com/zydou/portal/internal/file"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
