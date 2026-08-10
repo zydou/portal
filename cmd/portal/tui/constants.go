@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/progress"
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -62,7 +62,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 func NewProgressBar() progress.Model {
-	p := progress.New(progress.WithGradient(SECONDARY_ELEMENT_COLOR, ELEMENT_COLOR))
+	p := progress.New(progress.WithColors(lipgloss.Color(SECONDARY_ELEMENT_COLOR), lipgloss.Color(ELEMENT_COLOR)))
 	p.PercentFormat = "  %.2f%%"
 	return p
 }

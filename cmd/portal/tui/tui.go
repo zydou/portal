@@ -11,9 +11,9 @@ import (
 	"github.com/zydou/portal/internal/conn"
 	"github.com/zydou/portal/internal/semver"
 	"github.com/zydou/portal/protocol/transfer"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // ------------------------------------------------- Shared UI Messages ------------------------------------------------

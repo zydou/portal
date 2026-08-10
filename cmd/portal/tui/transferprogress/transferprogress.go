@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/zydou/portal/cmd/portal/tui"
-	"github.com/charmbracelet/bubbles/progress"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/progress"
+	tea "charm.land/bubbletea/v2"
 	"github.com/pkg/errors"
 )
 
@@ -66,7 +66,7 @@ func (m Model) View() string {
 		tui.PadText + progressBar
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
@@ -74,7 +74,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.Width > tui.MAX_WIDTH {
 			m.Width = tui.MAX_WIDTH
 		}
-		m.progressBar.Width = m.Width
+		m.progressBar.SetWidth(m.Width)
 		return m, nil
 
 	case tui.ProgressMsg:
