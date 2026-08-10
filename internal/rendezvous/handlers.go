@@ -14,7 +14,7 @@ import (
 	"github.com/zydou/portal/internal/logger"
 	"github.com/zydou/portal/protocol/rendezvous"
 	"go.uber.org/zap"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // ------------------------------------------------------ Handlers -----------------------------------------------------

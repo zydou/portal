@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/coder/websocket v1.8.15
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/structs v1.1.0
 	github.com/mattn/go-runewidth v0.0.27
@@ -18,7 +19,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.43.0
 	go.uber.org/zap v1.28.0
-	nhooyr.io/websocket v1.8.10
 )
 
 require (

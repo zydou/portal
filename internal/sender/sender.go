@@ -12,7 +12,7 @@ import (
 	"github.com/zydou/portal/protocol/rendezvous"
 	"github.com/zydou/portal/protocol/transfer"
 	"github.com/schollz/pake/v3"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 const MAX_CHUNK_BYTES = 1e6

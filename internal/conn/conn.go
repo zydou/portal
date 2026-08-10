@@ -7,7 +7,7 @@ import (
 
 	"github.com/zydou/portal/protocol/rendezvous"
 	"github.com/zydou/portal/protocol/transfer"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // impose no message size limit

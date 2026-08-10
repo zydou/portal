@@ -11,7 +11,7 @@ import (
 	"github.com/zydou/portal/protocol/rendezvous"
 	"github.com/zydou/portal/protocol/transfer"
 	"github.com/schollz/pake/v3"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // ConnectRendezvous makes the initial connection to the rendezvous server.
