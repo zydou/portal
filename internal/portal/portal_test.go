@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/zydou/portal/internal/portal"
-	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -55,7 +54,7 @@ func setupRendezvous(ctx context.Context) (*rendezvousContainer, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "rendezvous:latest", // FIXME: ideally we want to run from dockerfile, not from prebuilt image.
 		ExposedPorts: []string{"8080/tcp"},
-		WaitingFor: wait.ForHTTP("/ping").WithPort(nat.Port("8080/tcp")).WithStatusCodeMatcher(
+		WaitingFor: wait.ForHTTP("/ping").WithPort("8080/tcp").WithStatusCodeMatcher(
 			func(status int) bool { return status == http.StatusOK }),
 	}
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -74,7 +73,7 @@ func setupRendezvous(ctx context.Context) (*rendezvousContainer, error) {
 	if err != nil {
 		return nil, err
 	}
-	uri := fmt.Sprintf("%s:%d", ip, mappedPort.Int())
+	uri := fmt.Sprintf("%s:%d", ip, mappedPort.Num())
 
 	return &rendezvousContainer{Container: container, URI: uri}, nil
 }
