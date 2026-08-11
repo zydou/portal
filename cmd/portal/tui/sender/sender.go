@@ -17,7 +17,6 @@ import (
 	"github.com/zydou/portal/internal/semver"
 	"github.com/zydou/portal/internal/sender"
 	"github.com/zydou/portal/protocol/transfer"
-	"github.com/atotto/clipboard"
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/spinner"
@@ -72,6 +71,7 @@ func WithVersion(version semver.Version) Option {
 type model struct {
 	state       tuiState // defaults to 0 (showPassword)
 	readyToSend bool
+	autoCopied  bool // whether the receiver command has already been copied to the clipboard automatically
 	ctx         context.Context
 
 	msgs chan interface{}
@@ -166,13 +166,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.fileNames) == 1 {
 			message = fmt.Sprintf("Archived object (%s)", tui.ByteCountSI(msg.size))
 		}
-		return m, tui.TaskCmd(message, m.spinner.Tick)
+		return m, tea.Batch(tui.TaskCmd(message, m.spinner.Tick), m.tryAutoCopy())
 
 	case connectMsg:
 		m.keys.CopyPassword.SetEnabled(true)
 		m.password = msg.password
 		connectMessage := fmt.Sprintf("Connected to Portal server (%s)", m.rendezvousAddr)
-		return m, tui.TaskCmd(connectMessage, secureCmd(m.ctx, msg.conn, msg.password))
+		return m, tea.Batch(
+			tui.TaskCmd(connectMessage, secureCmd(m.ctx, msg.conn, msg.password)),
+			m.tryAutoCopy(),
+		)
 
 	case timer.TickMsg:
 		var cmd tea.Cmd
@@ -245,14 +248,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.CopyPassword):
-			err := clipboard.WriteAll(m.copyReceiverCommand())
-			if err != nil {
+			if err := copyToClipboard(m.copyReceiverCommand()); err != nil {
 				return m, tui.ErrorCmd(errors.New("Failed to copy password to clipboard"))
-			} else {
-				m.copyMessageTimer.Timeout = tui.TEMP_UI_MESSAGE_DURATION
-				cmd := m.copyMessageTimer.Init()
-				return m, cmd
 			}
+			m.copyMessageTimer.Timeout = tui.TEMP_UI_MESSAGE_DURATION
+			cmd := m.copyMessageTimer.Init()
+			return m, cmd
 		}
 
 		var fileTableCmd tea.Cmd
@@ -450,4 +451,32 @@ func (m *model) copyReceiverCommand() string {
 	}
 
 	return btuilder.String()
+}
+
+// tryAutoCopy copies the receiver command to the clipboard once the sender is
+// both ready to send and the password has been established. This mirrors the
+// manual (c) password-to-clipboard action, but fires automatically so the user
+// does not have to press a key before sharing the command on the receiving end.
+//
+// The password and the "ready to send" flag arrive in non-deterministic order,
+// so this is called from both the connectMsg and packedMsg handlers; the
+// autoCopied flag guarantees a single copy. A clipboard failure (e.g. running
+// on a headless server with no clipboard) is ignored: the receiver command is
+// still rendered on screen, and the (c) key remains available as a fallback.
+func (m *model) tryAutoCopy() tea.Cmd {
+	if !m.readyToSend || m.password == "" || m.autoCopied {
+		return nil
+	}
+	// Best-effort copy: uses a native clipboard backend when one exists, and
+	// falls back to an OSC 52 escape sequence (interpreted by the terminal
+	// emulator over an SSH connection) otherwise. A clipboard failure (e.g.
+	// no controlling terminal and no native backend) is ignored so that the
+	// transfer flow keeps working; the receiver command is still shown on
+	// screen, and (c) remains available as a fallback.
+	if err := copyToClipboard(m.copyReceiverCommand()); err != nil {
+		return nil
+	}
+	m.autoCopied = true
+	m.copyMessageTimer.Timeout = tui.TEMP_UI_MESSAGE_DURATION
+	return m.copyMessageTimer.Init()
 }
