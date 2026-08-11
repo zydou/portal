@@ -91,8 +91,15 @@ func handleSendCommandRaw(version string, filenames []string) error {
 	if err != nil {
 		return fmt.Errorf("fetching version from relay: %w", err)
 	}
-	if ver.Compare(serverVer) == semver.CompareOldMajor {
+	switch ver.Compare(serverVer) {
+	case semver.CompareNewMajor, semver.CompareOldMajor:
 		return fmt.Errorf("incompatible version %s -> %s", ver, serverVer)
+	case semver.CompareEqual:
+		fmt.Printf("• Portal version (%s) compatible with server version (%s)\n", ver, serverVer)
+	case semver.CompareNewMinor, semver.CompareNewPatch:
+		fmt.Printf("• Portal version (%s) newer than server version (%s)\n", ver, serverVer)
+	case semver.CompareOldMinor, semver.CompareOldPatch:
+		fmt.Printf("• Server version (%s) newer than Portal version (%s)\n", serverVer, ver)
 	}
 	files := make([]*os.File, 0, len(filenames))
 	for _, name := range filenames {
