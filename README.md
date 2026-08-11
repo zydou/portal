@@ -36,7 +36,7 @@ To send files:
 portal send <file1> <file2> <folder1> <folder2> ...
 ```
 
-The application will output a temporary password on the format `1-inertia-elliptical-celestial`.
+The application will output a temporary password on the format `1-aB3xK9mQ2pL8rN4t`.
 <br><br>
 The sender will communicate this password to the receiver over some secure channel.
 
@@ -45,7 +45,7 @@ The sender will communicate this password to the receiver over some secure chann
 To receive those files:
 
 ```bash
-portal receive 1-intertia-elliptical-celestial
+portal receive 1-aB3xK9mQ2pL8rN4t
 ```
 
 The two clients will establish a connection through a relay server, which relays the (encrypted) file transfer.
@@ -67,7 +67,7 @@ The sender **(top)** sends a folder and three files to the receiver **(bottom)**
 
 ### Completions
 
-`portal` provides extensive <kbd>TAB</kbd> completions for the following shells:
+`portal` provides <kbd>TAB</kbd> completions for the following shells:
 
 - `bash`
 - `zsh`
@@ -78,30 +78,6 @@ To see installation instructions for your shell and platform, run:
 
 ```bash
 portal completion [bash|zsh|fish|powershell] --help
-```
-
-#### Tip!
-
-You probably didn't _quite_ catch the password Bob was screaming across the room.
-<br>
-You can use <kbd>TAB</kbd> completions to auto-complete passwords on the receiving end.
-
-Press <kbd>TAB</kbd> when entering parts of your password...
-```bash
-portal receive 42-relative-parsec-s...
-```
-
-...and `portal` will suggest the possible words
-```bash
-$ portal receive 42-relative-parsec-s...
-
-42-relative-parsec-supernova  42-relative-parsec-scatter    42-relative-parsec-solar      42-relative-parsec-spin       42-relative-parsec-static     
-42-relative-parsec-sigma      42-relative-parsec-solid      42-relative-parsec-star       42-relative-parsec-storm      42-relative-parsec-system
-```
-
-__boom__. _supernova_.
-```bash
-portal receive 42-relative-parsec-supernova
 ```
 
 ### Flags
@@ -117,7 +93,6 @@ portal receive 42-relative-parsec-supernova
 #### `Sender` and `Receiver`
 
 - `-r/--relay`: address of the relay server (`:8080`, `myrelay.io:1234`, ...)
-- `-s/--tui-style`: the style of the tui (`rich` | `raw`)
 
 #### `Sender`, `Receiver` and `Relay`
 
@@ -140,8 +115,6 @@ verbose: false
 prompt_overwrite_files: true
 # The port used when serving the relay using "portal serve".
 relay_serve_port: 8080
-# The style of the TUI.
-tui_style: rich
 ```
 
 ### Hosting your own relay
@@ -184,7 +157,7 @@ The communication works as follows:
 
 - `sender` connects to `relay`
 - `relay` allocates a numerical ID to the sender and sends it to the `sender`
-- `sender` generates and outputs the password (starting with the ID) to the terminal, hashes the password and sends it to the `relay`
+- `sender` generates and outputs a random password (starting with the ID) to the terminal, hashes the password and sends it to the `relay`
 - `receiver` hashes the password (which has been communicated over some secure channel) and sends it to the `relay`
 - When both the `sender` and the `receiver` have sent the hashed password to the `relay`, the cryptographic exchange starts
 - During the cryptographic exchange, the `relay`, well, relays messages from the `sender` to the `receiver` and vice-versa

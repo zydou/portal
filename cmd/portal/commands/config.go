@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/zydou/portal/cmd/portal/config"
-	"github.com/alecthomas/chroma/quick"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,10 +30,7 @@ func Config() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("config file (%s) could not be read: %w", configPath, err)
 			}
-			if err := quick.Highlight(os.Stdout, string(config), "yaml", "terminal256", "onedark"); err != nil {
-				// Failed to highlight output, output un-highlighted config file contents.
-				fmt.Println(string(config))
-			}
+			fmt.Println(string(config))
 			return nil
 		},
 	}

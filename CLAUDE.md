@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Portal is a command-line file transfer tool (Go). Two peers (`sender`/`receiver`) exchange a
-human-readable password (e.g. `1-inertia-elliptical-celestial`), perform a PAKE2 key exchange
+password (e.g. `1-aB3xK9mQ2pL8rN4t`), perform a PAKE2 key exchange
 through a self-hosted "rendezvous" relay server, and then transfer files through that relay.
 The relay never sees file contents or the plaintext password.
 
@@ -102,7 +102,9 @@ logic belongs in `internal/sender`/`internal/receiver`, not here.
 
 ### Supporting packages
 
-- `internal/password` — generates/validates the human-readable password from `data/words.go`.
+- `internal/password` — generates a random alphanumeric password (`<id>-<16 random chars>`,
+  ~95 bits of entropy) using `crypto/rand`; the relay-allocated numeric ID is the prefix.
+  `data/words.go` (the 78-word space-themed wordlist) has been removed.
 - `internal/file` — tars (uncompressed) files/directories for send (`PackFiles`, resolving
   symlinks), and streams-unpacks on receive (`Unpacker`/`Committer`), optionally prompting
   before overwriting existing files.
@@ -115,8 +117,7 @@ logic belongs in `internal/sender`/`internal/receiver`, not here.
 Cobra command tree built in `main.go` (`send`, `receive`, `serve`, `version`, `config`), backed
 by a Viper config (`cmd/portal/config`) stored at `$HOME/.config/portal/config.yml` and merged
 with defaults defined there. `cmd/portal/tui` holds the Bubble Tea UI (separate sender/receiver
-views, a shared file table and transfer-progress component); the `-s/--tui-style` flag switches
-between `rich` and `raw` rendering.
+views, a shared file table and transfer-progress component).
 
 ## Deviations from upstream
 

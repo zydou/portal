@@ -16,9 +16,6 @@ const (
 	PORTAL_CONFIG_DIR_NAME = "portal"
 	CONFIG_FILE_NAME       = "config"
 	CONFIG_FILE_EXT        = "yml"
-
-	StyleRich = "rich"
-	StyleRaw  = "raw"
 )
 
 type Config struct {
@@ -26,7 +23,6 @@ type Config struct {
 	Verbose              bool   `mapstructure:"verbose"`
 	PromptOverwriteFiles bool   `mapstructure:"prompt_overwrite_files"`
 	RelayServePort       int    `mapstructure:"relay_serve_port"`
-	TuiStyle             string `mapstructure:"tui_style"`
 }
 
 func GetDefault() Config {
@@ -35,7 +31,6 @@ func GetDefault() Config {
 		Verbose:              false,
 		PromptOverwriteFiles: true,
 		RelayServePort:       8080,
-		TuiStyle:             StyleRich,
 	}
 }
 

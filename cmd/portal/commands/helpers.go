@@ -17,7 +17,6 @@ const (
   - somedomain.com/relay
 	- ...
 	`
-	tuiStyleFlagDesc = "Style of the tui (rich|raw)"
 )
 
 func setupLoggingFromViper(cmd string) (*os.File, error) {
