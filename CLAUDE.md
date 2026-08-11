@@ -42,6 +42,14 @@ CI (`.github/workflows/ci.yml`) is a single job that runs lint, build, and test 
 `.github/workflows/release.yml` builds and publishes GitHub releases (Linux/macOS, amd64/arm64
 only) via `.goreleaser.yml` on `v*.*.*` tags.
 
+### CI/CD troubleshooting
+
+- `git tag` creates **lightweight** tags; `git tag -a -m "..."` creates **annotated** tags.
+  GitHub Actions `push` events only fire for **annotated** tags, not lightweight ones.
+  Check with `git cat-file -t <tag>` (`tag` = annotated, `commit` = lightweight).
+- `gh api repos/zydou/portal/actions/workflows/<name>.yml/runs` lists all workflow runs
+  with `{created_at, event, head_sha, head_branch, ref}` for debugging trigger failures.
+
 ## Architecture
 
 The codebase is split into a **protocol layer** (wire messages only, no logic) and packages that
