@@ -153,10 +153,13 @@ func (c *committer) Commit() (int64, error) {
 	path := filepath.Join(c.cwd, c.name)
 	switch c.header.Typeflag {
 	case tar.TypeDir:
-		if _, err := os.Stat(path); err != nil {
-			if err := os.MkdirAll(path, 0755); err != nil {
-				return 0, err
-			}
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return 0, err
+		}
+		// Apply the mode from the tar header, bypassing the process umask
+		// that os.MkdirAll would otherwise mask the permission bits with.
+		if err := os.Chmod(path, os.FileMode(c.header.Mode)); err != nil {
+			return 0, err
 		}
 		return 0, nil
 	case tar.TypeReg:
@@ -164,15 +167,24 @@ func (c *committer) Commit() (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		defer func() { _ = f.Close() }()
 		if _, err := io.Copy(f, c.tr); err != nil {
+			_ = f.Close()
 			return 0, err
 		}
-		info, err := f.Stat()
+		if err := f.Close(); err != nil {
+			return 0, err
+		}
+		// Apply the mode from the tar header so the executable bit (and any
+		// other permission bits) are preserved. os.Create creates files with
+		// mode 0666 masked by the umask, which always drops the exec bit.
+		if err := os.Chmod(path, os.FileMode(c.header.Mode)); err != nil {
+			return 0, err
+		}
+		info, err := os.Stat(path)
 		if err != nil {
 			return 0, err
 		}
-		return info.Size(), f.Close()
+		return info.Size(), nil
 	default:
 		return 0, errors.New("unsupported file type")
 	}
@@ -227,6 +239,9 @@ func addToTarArchive(tw *tar.Writer, file *os.File) error {
 	absoluteBase = filepath.Dir(absPath)
 
 	return filepath.Walk(file.Name(), func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if (fi.Mode() & os.ModeSymlink) == os.ModeSymlink {
 			// read path that the symlink is pointing to
 			var link string
@@ -244,7 +259,7 @@ func addToTarArchive(tw *tar.Writer, file *os.File) error {
 		// tar.FileInfoHeader handles path as pointee if path is a symlink
 		header, e := tar.FileInfoHeader(fi, path)
 		if e != nil {
-			return err
+			return e
 		}
 
 		// use absolute paths to handle both relative and absolute input paths identically
