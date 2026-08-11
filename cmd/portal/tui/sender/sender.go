@@ -86,6 +86,7 @@ type model struct {
 	version     *semver.Version
 
 	width            int
+	statusLog        []string // accumulated status messages rendered at the top
 	spinner          spinner.Model
 	transferProgress transferprogress.Model
 	fileTable        filetable.Model
@@ -232,6 +233,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.fileTable = m.fileTable.Finalize()
 		return m, tui.TaskCmd(message, tui.QuitCmd())
 
+	case tui.StatusMsg:
+		m.statusLog = append(m.statusLog, msg.Text)
+		return m, msg.Cmd
+
 	case tui.ErrorMsg:
 		return m, tui.ErrorCmd(errors.New(msg.Error()))
 
@@ -294,9 +299,12 @@ func (m model) View() tea.View {
 
 	statusText := btuilder.String()
 
+	statusLog := tui.RenderStatusLog(m.statusLog)
+
 	switch m.state {
 	case showPassword:
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(statusText) + "\n\n" +
 			tui.PadText + tui.InfoStyle("On the receiving end, run:") + "\n" +
 			tui.PadText + tui.InfoStyle(m.copyReceiverCommand()) + "\n\n" +
@@ -304,7 +312,8 @@ func (m model) View() tea.View {
 			tui.PadText + m.help.View(m.keys) + "\n\n")
 
 	case showSendingProgress:
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(statusText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			m.fileTable.View() +
@@ -312,7 +321,8 @@ func (m model) View() tea.View {
 
 	case showFinished:
 		finishedText := fmt.Sprintf("Sent %d object(s) (%s)", len(m.fileNames), tui.ByteCountSI(m.payloadSize))
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(finishedText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			m.fileTable.View())

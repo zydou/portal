@@ -89,6 +89,7 @@ type model struct {
 	commiter file.Committer
 
 	width            int
+	statusLog        []string // accumulated status messages rendered at the top
 	spinner          spinner.Model
 	transferProgress transferprogress.Model
 	fileTable        filetable.Model
@@ -212,6 +213,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.fileTable.SetFiles(m.receivedFiles)
 		return m, tui.QuitCmd()
 
+	case tui.StatusMsg:
+		m.statusLog = append(m.statusLog, msg.Text)
+		return m, msg.Cmd
+
 	case tui.ErrorMsg:
 		return m, tui.ErrorCmd(errors.New(msg.Error()))
 
@@ -270,24 +275,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() tea.View {
 
+	statusLog := tui.RenderStatusLog(m.statusLog)
+
 	switch m.state {
 
 	case showEstablishing:
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(fmt.Sprintf("%s Establishing connection with sender", m.spinner.View())) + "\n\n" +
 			tui.PadText + m.help.View(m.keys) + "\n\n")
 
 	case showReceivingProgress:
 		payloadSize := tui.BoldText(tui.ByteCountSI(m.payloadSize))
 		receivingText := fmt.Sprintf("%s Receiving objects (%s)", m.spinner.View(), payloadSize)
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(receivingText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			tui.PadText + m.help.View(m.keys) + "\n\n")
 
 	case showOverwritePrompt:
 		waitingText := fmt.Sprintf("%s Waiting for file overwrite confirmation", m.spinner.View())
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(waitingText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			tui.PadText + m.overwritePrompt.View().Content + "\n\n" +
@@ -296,7 +306,8 @@ func (m model) View() tea.View {
 	case showUnpacking:
 		payloadSize := tui.BoldText(tui.ByteCountSI(m.payloadSize))
 		unpackingText := fmt.Sprintf("%s Unpacking payload (%s) and writing to disk", m.spinner.View(), payloadSize)
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(unpackingText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			tui.PadText + m.help.View(m.keys) + "\n\n")
@@ -307,7 +318,8 @@ func (m model) View() tea.View {
 			oneOrMoreFiles += "s"
 		}
 		finishedText := fmt.Sprintf("Received %d %s (%s unpacked)", len(m.receivedFiles), oneOrMoreFiles, tui.ByteCountSI(m.unpackedPayloadSize))
-		return tea.NewView(tui.PadText + tui.LogSeparator(m.width) +
+		return tea.NewView(statusLog +
+			tui.PadText + tui.LogSeparator(m.width) +
 			tui.PadText + tui.InfoStyle(finishedText) + "\n\n" +
 			tui.PadText + m.transferProgress.View() + "\n\n" +
 			m.fileTable.View())

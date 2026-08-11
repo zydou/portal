@@ -26,6 +26,13 @@ type SecureMsg struct {
 	Conn conn.Transfer
 }
 
+// StatusMsg carries a status message and the command that follows it.
+// The message is rendered as part of the view instead of printed via tea.Println.
+type StatusMsg struct {
+	Text string
+	Cmd  tea.Cmd
+}
+
 type TransferStateMessage struct {
 	State transfer.MsgType
 }
@@ -108,9 +115,29 @@ func ByteCountSI(b int64) string {
 
 // -------------------------------------------------- Shared Commands --------------------------------------------------
 
+// TaskCmd wraps a status message alongside the given command. The message is
+// delivered to the model as a [StatusMsg] so it can be rendered as part of the
+// View (rather than printed above the screen via tea.Println, which conflicts
+// with the v2 renderer's ScreenBuffer).
 func TaskCmd(task string, cmd tea.Cmd) tea.Cmd {
-	msg := PadText + fmt.Sprintf("• %s", task)
-	return tea.Sequence(tea.Println(msg), cmd)
+	msg := PadText + "• " + task
+	return func() tea.Msg {
+		return StatusMsg{Text: msg, Cmd: cmd}
+	}
+}
+
+// RenderStatusLog renders accumulated status messages (each already formatted
+// with bullet prefix and padding by [TaskCmd]) as a block for inclusion in a View.
+func RenderStatusLog(log []string) string {
+	if len(log) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for _, line := range log {
+		sb.WriteString(line)
+		sb.WriteByte('\n')
+	}
+	return sb.String()
 }
 
 func QuitCmd() tea.Cmd {
