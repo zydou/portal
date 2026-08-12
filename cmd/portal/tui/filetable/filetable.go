@@ -3,15 +3,18 @@ package filetable
 import (
 	"math"
 
-	"github.com/zydou/portal/cmd/portal/tui"
-	"github.com/zydou/portal/internal/file"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
+	"github.com/zydou/portal/cmd/portal/tui"
+	"github.com/zydou/portal/internal/file"
 )
 
 const (
+	// headerLines is the number of vertical lines the table header occupies
+	// (header text + separator line from BorderBottom).
+	headerLines                   = 2
 	defaultMaxTableHeight         = 4
 	nameColumnWidthFactor float64 = 0.8
 	sizeColumnWidthFactor float64 = 1 - nameColumnWidthFactor
@@ -68,6 +71,7 @@ func New(opts ...Option) Model {
 }
 
 func (m *Model) SetFiles(filePaths []string) {
+	m.rows = make([]fileRow, 0, len(filePaths))
 	for _, filePath := range filePaths {
 		size, err := file.FileSize(filePath)
 		var formattedSize string
@@ -78,9 +82,12 @@ func (m *Model) SetFiles(filePaths []string) {
 		}
 		m.rows = append(m.rows, fileRow{path: filePath, formattedSize: formattedSize})
 	}
-	m.table.SetHeight(int(math.Min(float64(m.MaxHeight), float64(len(filePaths)))))
 	m.updateColumns()
 	m.updateRows()
+	// SetHeight sets the total table height (header + viewport). The table's
+	// SetHeight internally subtracts the header height (headerLines), so we
+	// add headerLines to the row count to ensure all data rows are visible.
+	m.table.SetHeight(int(math.Min(float64(m.MaxHeight), float64(len(m.rows)+headerLines))))
 }
 
 func WithFiles(filePaths []string) Option {
@@ -110,6 +117,7 @@ func (m *Model) updateColumns() {
 		{Title: "File", Width: int(float64(w) * nameColumnWidthFactor)},
 		{Title: "Size", Width: int(float64(w) * sizeColumnWidthFactor)},
 	})
+	m.table.SetWidth(w)
 }
 
 func (m *Model) updateRows() {
