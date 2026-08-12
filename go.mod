@@ -34,6 +34,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
@@ -105,9 +106,9 @@ require (
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
-	github.com/schollz/pake/v3 v3.0.5
+	github.com/schollz/pake/v3 v3.2.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
-	github.com/tscholl2/siec v0.0.0-20210707234609-9bdfc483d499 // indirect
+	github.com/tscholl2/siec v0.0.0-20240310163802-c2c6f6198406 // indirect
 	golang.org/x/crypto v0.51.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sys v0.46.0 // indirect
