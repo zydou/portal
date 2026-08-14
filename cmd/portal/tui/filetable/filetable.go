@@ -84,6 +84,14 @@ func (m *Model) SetFiles(filePaths []string) {
 	}
 	m.updateColumns()
 	m.updateRows()
+	// Reset the cursor to the top after populating rows. A WindowSizeMsg
+	// received before any files exist clamps the inner table's cursor to -1
+	// (via SetRows with zero rows), and SetRows only ever clamps the cursor
+	// *down*, so that -1 would otherwise persist here and cause the viewport
+	// to render one fewer row than intended (an empty-looking table when few
+	// files were transferred). SetCursor must run *after* updateRows so the
+	// inner table's row count is non-zero (otherwise clamp(0,0,-1) yields -1).
+	m.table.SetCursor(0)
 	// SetHeight sets the total table height (header + viewport). The table's
 	// SetHeight internally subtracts the header height (headerLines), so we
 	// add headerLines to the row count to ensure all data rows are visible.
@@ -108,7 +116,15 @@ func WithMaxHeight(height int) Option {
 }
 
 func (m *Model) getMaxWidth() int {
-	return int(math.Min(tui.MAX_WIDTH-2*tui.MARGIN, float64(m.Width)))
+	w := m.Width
+	if w <= 0 {
+		// No WindowSizeMsg received yet (e.g. receiver calls SetFiles
+		// before the initial resize arrives). Fall back to MAX_WIDTH so
+		// columns get non-zero widths and rows actually render instead
+		// of an empty box.
+		w = tui.MAX_WIDTH
+	}
+	return int(math.Min(tui.MAX_WIDTH-2*tui.MARGIN, float64(w)))
 }
 
 func (m *Model) updateColumns() {
